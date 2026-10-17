@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="claude:viewport-fit-sides" content="cover">
+    <title>Painel de Ganhos de IA</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-200">
+    <div class="min-h-full flex flex-col">
+
+        <!-- Header -->
+        <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                        <i class="fa-solid fa-chart-line text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">TaskGains</h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Controle de Ganhos em IA & Metas</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <!-- USD/BRL Rate Badge -->
+                    <div class="hidden sm:flex items-center space-x-2 bg-slate-100 dark:bg-slate-700/50 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300">
+                        <i class="fa-solid fa-dollar-sign text-emerald-500"></i>
+                        <span>USD/BRL:</span>
+                        <span id="headerExchangeRate" class="font-bold text-slate-900 dark:text-white tabular-nums">5.00</span>
+                        <button onclick="openSettingsModal()" class="ml-1 text-slate-400 hover:text-blue-500 transition-colors" title="Alterar cotação">
+                            <i class="fa-solid fa-pen text-[10px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Quick Add Button -->
+                    <button onclick="openEarningModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold text-sm shadow-sm shadow-blue-500/30 flex items-center space-x-2 transition-all active:scale-95">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>Novo Lançamento</span>
+                    </button>
+
+                    <!-- Theme Toggle -->
+                    <button onclick="toggleTheme()" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                        <i class="fa-solid fa-moon dark:hidden"></i>
+                        <i class="fa-solid fa-sun hidden dark:inline text-amber-400"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-8 overflow-x-auto">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-3 px-1 border-b-2 font-semibold text-sm border-blue-600 text-blue-600 dark:text-blue-400 flex items-center space-x-2 whitespace-nowrap transition-colors">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Visão Geral</span>
+                </button>
+                <button onclick="switchTab('earnings')" id="tab-earnings" class="py-3 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center space-x-2 whitespace-nowrap transition-colors">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span>Lançamentos</span>
+                </button>
+                <button onclick="switchTab('platforms')" id="tab-platforms" class="py-3 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center space-x-2 whitespace-nowrap transition-colors">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Plataformas</span>
+                </button>
+                <button onclick="switchTab('goals')" id="tab-goals" class="py-3 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center space-x-2 whitespace-nowrap transition-colors">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <span>Metas</span>
+                </button>
+                <button onclick="switchTab('settings')" id="tab-settings" class="py-3 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center space-x-2 whitespace-nowrap transition-colors">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Configurações</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+            <!-- TAB: DASHBOARD -->
+            <div id="view-dashboard" class="space-y-6">
+
+                <!-- Goal Progress Card -->
+                <div class="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+                    <div class="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <div class="flex items-center space-x-2 text-blue-400 text-sm font-semibold mb-1">
+                                <i class="fa-solid fa-bullseye"></i>
+                                <span id="goalPeriodLabel">Meta Mensal</span>
+                            </div>
+                            <h2 class="text-2xl sm:text-3xl font-extrabold tabular-nums">
+                                <span id="goalCurrent">R$ 0,00</span>
+                                <span class="text-slate-400 text-lg font-normal">/ <span id="goalTarget">R$ 3.000,00</span></span>
+                            </h2>
+                        </div>
+                        <div class="flex items-center space-x-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10">
+                            <div class="text-right">
+                                <p class="text-xs text-slate-300">Progresso Atual</p>
+                                <p id="goalPercent" class="text-lg font-bold text-emerald-400 tabular-nums">0%</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                <i class="fa-solid fa-trophy text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-slate-700/60 rounded-full h-4 p-0.5 overflow-hidden border border-white/5">
+                        <div id="goalProgressBar" class="bg-gradient-to-r from-blue-500 to-emerald-400 h-full rounded-full transition-all duration-700" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-3 text-xs text-slate-400">
+                        <span id="goalRemaining">Falta R$ 3.000,00 para atingir a meta</span>
+                        <button onclick="switchTab('goals')" class="text-blue-400 hover:text-blue-300 font-medium flex items-center space-x-1">
+                            <span>Ajustar meta</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Total Geral -->
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Total Geral (BRL)</p>
+                            <h3 id="statTotalBrl" class="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">R$ 0,00</h3>
+                            <p id="statTotalUsd" class="text-xs text-slate-500 mt-1 tabular-nums">US$ 0,00</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                    </div>
+
+                    <!-- Aprovado / Pago -->
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-1">Aprovado / Pago</p>
+                            <h3 id="statPaidBrl" class="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">R$ 0,00</h3>
+                            <p id="statPaidCount" class="text-xs text-slate-500 mt-1">0 lançamentos</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                    </div>
+
+                    <!-- Pendente -->
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-amber-500 mb-1">Pendente</p>
+                            <h3 id="statPendingBrl" class="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">R$ 0,00</h3>
+                            <p id="statPendingCount" class="text-xs text-slate-500 mt-1">0 lançamentos</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                    </div>
+
+                    <!-- Plataforma Top -->
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-purple-500 mb-1">Plataforma Líder</p>
+                            <h3 id="statTopPlatform" class="text-xl font-bold text-slate-900 dark:text-white truncate max-w-[140px]">Nenhuma</h3>
+                            <p id="statTopPlatformVal" class="text-xs text-slate-500 mt-1 tabular-nums">R$ 0,00</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-crown"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts & Recent Activity Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Chart Section -->
+                    <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-pie text-blue-500"></i>
+                                <span>Ganhos por Plataforma (BRL)</span>
+                            </h3>
+                            <span class="text-xs text-slate-400" id="chartTotalLabel">Total convertido</span>
+                        </div>
+                        <div class="flex-1 flex items-center justify-center relative min-h-[280px]">
+                            <canvas id="platformChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Quick Platform Breakdown List -->
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex flex-col">
+                        <h3 class="font-bold text-slate-900 dark:text-white flex items-center space-x-2 mb-4">
+                            <i class="fa-solid fa-layer-group text-purple-500"></i>
+                            <span>Resumo por Plataforma</span>
+                        </h3>
+                        <div id="platformBreakdownList" class="space-y-3 overflow-y-auto max-h-[280px] pr-1">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Entries Table -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                        <h3 class="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-clock-rotate-left text-blue-500"></i>
+                            <span>Lançamentos Recentes</span>
+                        </h3>
+                        <button onclick="switchTab('earnings')" class="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                            Ver todos →
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 dark:bg-slate-700/50 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                                    <th class="py-3 px-6">Data</th>
+                                    <th class="py-3 px-6">Plataforma</th>
+                                    <th class="py-3 px-6">Valor Original</th>
+                                    <th class="py-3 px-6">Valor em BRL</th>
+                                    <th class="py-3 px-6">Status</th>
+                                    <th class="py-3 px-6">Observação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentEarningsTableBody" class="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TAB: EARNINGS -->
+            <div id="view-earnings" class="space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Gerenciamento de Lançamentos</h2>
+                        <p class="text-xs text-slate-500">Adicione, edite ou filtre todos os seus ganhos registrados.</p>
+                    </div>
+                    <button onclick="openEarningModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-sm flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>Novo Lançamento</span>
+                    </button>
+                </div>
+
+                <!-- Filters Bar -->
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Filtrar por Plataforma</label>
+                        <select id="filterPlatform" onchange="renderEarningsTable()" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Todas as Plataformas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Filtrar por Status</label>
+                        <select id="filterStatus" onchange="renderEarningsTable()" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Todos os Status</option>
+                            <option value="Pago">Aprovado / Pago</option>
+                            <option value="Pendente">Pendente</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Busca Rápida</label>
+                        <input type="text" id="filterSearch" oninput="renderEarningsTable()" placeholder="Buscar por observação..." class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- Full Earnings Table -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 dark:bg-slate-700/50 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                                    <th class="py-3 px-6">Data</th>
+                                    <th class="py-3 px-6">Plataforma</th>
+                                    <th class="py-3 px-6">Valor Original</th>
+                                    <th class="py-3 px-6">Valor em BRL</th>
+                                    <th class="py-3 px-6">Status</th>
+                                    <th class="py-3 px-6">Observação</th>
+                                    <th class="py-3 px-6 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fullEarningsTableBody" class="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: PLATFORMS -->
+            <div id="view-platforms" class="space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Gerenciamento de Plataformas</h2>
+                        <p class="text-xs text-slate-500">Cadastre novas plataformas e configure a moeda padrão (USD ou BRL).</p>
+                    </div>
+                    <button onclick="openPlatformModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-sm flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>Nova Plataforma</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="platformsGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- TAB: GOALS -->
+            <div id="view-goals" class="space-y-6 hidden">
+                <div class="max-w-xl mx-auto bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Configuração de Metas</h2>
+                        <p class="text-xs text-slate-500 mt-1">Defina o período e o valor alvo para manter seus ganhos em ritmo constante.</p>
+                    </div>
+
+                    <form onsubmit="saveGoalSettings(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Período da Meta</label>
+                            <select id="goalPeriodSelect" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="diaria">Meta Diária</option>
+                                <option value="semanal">Meta Semanal</option>
+                                <option value="mensal" selected>Meta Mensal</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Valor Alvo (R$)</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-3 text-slate-400 text-sm">R$</span>
+                                <input type="number" step="0.01" id="goalTargetInput" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums" placeholder="3000.00">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all shadow-md shadow-blue-500/20">
+                            Salvar Nova Meta
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TAB: SETTINGS -->
+            <div id="view-settings" class="space-y-6 hidden">
+                <div class="max-w-xl mx-auto space-y-6">
+                    <!-- Exchange Rate Card -->
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-white">Cotação do Dólar (USD / BRL)</h2>
+                            <p class="text-xs text-slate-500 mt-1">Utilizado para converter ganhos em dólares para Real brasileiro em tempo real.</p>
+                        </div>
+                        <form onsubmit="saveExchangeRate(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">1 USD em BRL</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-3 text-slate-400 text-sm">R$</span>
+                                    <input type="number" step="0.01" id="exchangeRateInput" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums" placeholder="5.00">
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all shadow-md shadow-blue-500/20">
+                                Atualizar Cotação
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Data Backup & Reset -->
+                    <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-4">
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Gerenciamento de Dados</h2>
+                        <p class="text-xs text-slate-500">Exporte seus dados em JSON para backup ou limpe todas as informações.</p>
+                        <div class="flex flex-wrap gap-3 pt-2">
+                            <button onclick="exportData()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center space-x-2">
+                                <i class="fa-solid fa-download"></i>
+                                <span>Exportar JSON</span>
+                            </button>
+                            <button onclick="triggerImport()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center space-x-2">
+                                <i class="fa-solid fa-upload"></i>
+                                <span>Importar JSON</span>
+                            </button>
+                            <input type="file" id="importFile" onchange="importData(event)" accept=".json" class="hidden">
+                            <button onclick="resetData()" class="bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center space-x-2">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <span>Resetar Dados</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL: EARNING FORM -->
+    <div id="earningModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden transform transition-all">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <h3 id="earningModalTitle" class="text-lg font-bold text-slate-900 dark:text-white">Novo Lançamento</h3>
+                <button onclick="closeEarningModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form onsubmit="saveEarning(event)" class="p-6 space-y-4">
+                <input type="hidden" id="earningId">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Plataforma</label>
+                        <select id="earningPlatform" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Data do Lançamento</label>
+                        <input type="date" id="earningDate" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Valor</label>
+                        <input type="number" step="0.01" id="earningValue" required placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 tabular-nums">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>
+                        <select id="earningStatus" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="Pendente">Pendente</option>
+                            <option value="Pago">Aprovado / Pago</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Observação (Opcional)</label>
+                    <textarea id="earningNote" rows="2" placeholder="Ex: Tarefas de codificação de IA / Lote #42" class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <button type="button" onclick="closeEarningModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20">
+                        Salvar Lançamento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: PLATFORM FORM -->
+    <div id="platformModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden transform transition-all">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <h3 id="platformModalTitle" class="text-lg font-bold text-slate-900 dark:text-white">Nova Plataforma</h3>
+                <button onclick="closePlatformModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form onsubmit="savePlatform(event)" class="p-6 space-y-4">
+                <input type="hidden" id="platformOldName">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Nome da Plataforma</label>
+                    <input type="text" id="platformName" required placeholder="Ex: Claru, Hub, Remotasks..." class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Moeda Padrão</label>
+                    <select id="platformCurrency" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="USD">USD ($)</option>
+                        <option value="BRL">BRL (R$)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Cor Identificadora</label>
+                    <div class="flex items-center space-x-3">
+                        <input type="color" id="platformColor" value="#3b82f6" class="w-12 h-10 rounded-xl border border-slate-200 dark:border-slate-600 p-1 bg-slate-50 dark:bg-slate-700 cursor-pointer">
+                        <span class="text-xs text-slate-500">Escolha uma cor para os gráficos e badges</span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <button type="button" onclick="closePlatformModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20">
+                        Salvar Plataforma
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script Application Logic -->
+    <script>
+        // State Management
+        let appData = {
+            exchangeRate: 5.45,
+            platforms: [
+                { name: 'Claru', currency: 'USD', color: '#3b82f6' },
+                { name: 'Hub', currency: 'USD', color: '#8b5cf6' },
+                { name: 'Outras', currency: 'BRL', color: '#10b981' }
+            ],
+            earnings: [
+                { id: '1', platform: 'Claru', value: 120.50, currency: 'USD', status: 'Pago', date: '2026-10-10', note: 'Lote de avaliação de código #12' },
+                { id: '2', platform: 'Hub', value: 85.00, currency: 'USD', status: 'Pago', date: '2026-10-12', note: 'Tarefas de RLHF' },
+                { id: '3', platform: 'Claru', value: 50.00, currency: 'USD', status: 'Pendente', date: '2026-10-14', note: 'Revisão de prompts' },
+                { id: '4', platform: 'Outras', value: 350.00, currency: 'BRL', status: 'Pago', date: '2026-10-15', note: 'Projeto pontual BRL' }
+            ],
+            goal: {
+                period: 'mensal',
+                target: 3000.00
+            }
+        };
+
+        let platformChartInstance = null;
+
+        // Initialize App
+        function initApp() {
+            loadFromLocalStorage();
+            applyThemePreference();
+            setupInitialDate();
+            renderAll();
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('taskgains_data');
+            if (saved) {
+                try {
+                    appData = JSON.parse(saved);
+                } catch (e) {
+                    console.error('Error loading saved data', e);
+                }
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('taskgains_data', JSON.stringify(appData));
+        }
+
+        function setupInitialDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('earningDate').value = today;
+        }
+
+        // Theme Handling
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('taskgains_theme', isDark ? 'dark' : 'light');
+        }
+
+        function applyThemePreference() {
+            const savedTheme = localStorage.getItem('taskgains_theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // Navigation Tabs
+        function switchTab(tabId) {
+            ['dashboard', 'earnings', 'platforms', 'goals', 'settings'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-${t}`);
+                btn.className = "py-3 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center space-x-2 whitespace-nowrap transition-colors";
+            });
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.className = "py-3 px-1 border-b-2 font-semibold text-sm border-blue-600 text-blue-600 dark:text-blue-400 flex items-center space-x-2 whitespace-nowrap transition-colors";
+
+            if (tabId === 'dashboard') {
+                renderDashboardCharts();
+            }
+        }
+
+        // Helper: Convert to BRL
+        function convertToBrl(value, currency) {
+            if (currency === 'USD') {
+                return value * appData.exchangeRate;
+            }
+            return value;
+        }
+
+        // Render All
+        function renderAll() {
+            document.getElementById('headerExchangeRate').innerText = appData.exchangeRate.toFixed(2);
+            document.getElementById('exchangeRateInput').value = appData.exchangeRate;
+
+            // Goals settings form
+            document.getElementById('goalPeriodSelect').value = appData.goal.period;
+            document.getElementById('goalTargetInput').value = appData.goal.target;
+
+            renderPlatformDropdowns();
+            renderStatsAndGoal();
+            renderRecentEarnings();
+            renderEarningsTable();
+            renderPlatformsGrid();
+            renderDashboardCharts();
+        }
+
+        // Platform Dropdowns
+        function renderPlatformDropdowns() {
+            const earningSelect = document.getElementById('earningPlatform');
+            const filterSelect = document.getElementById('filterPlatform');
+
+            let optionsHtml = '';
+            appData.platforms.forEach(p => {
+                optionsHtml += `<option value="${p.name}">${p.name} (${p.currency})</option>`;
+            });
+            earningSelect.innerHTML = optionsHtml;
+
+            let filterHtml = '<option value="">Todas as Plataformas</option>';
+            appData.platforms.forEach(p => {
+                filterHtml += `<option value="${p.name}">${p.name}</option>`;
+            });
+            filterSelect.innerHTML = filterHtml;
+        }
+
+        // Stats & Goal Calculation
+        function renderStatsAndGoal() {
+            let totalBrl = 0;
+            let totalUsd = 0;
+            let paidBrl = 0;
+            let paidCount = 0;
+            let pendingBrl = 0;
+            let pendingCount = 0;
+
+            const platformTotals = {};
+            appData.platforms.forEach(p => platformTotals[p.name] = 0);
+
+            appData.earnings.forEach(e => {
+                const pObj = appData.platforms.find(x => x.name === e.platform);
+                const curr = pObj ? pObj.currency : 'USD';
+                const brlVal = convertToBrl(e.value, curr);
+
+                totalBrl += brlVal;
+                if (curr === 'USD') totalUsd += e.value;
+
+                if (e.status === 'Pago') {
+                    paidBrl += brlVal;
+                    paidCount++;
+                    platformTotals[e.platform] = (platformTotals[e.platform] || 0) + brlVal;
+                } else {
+                    pendingBrl += brlVal;
+                    pendingCount++;
+                }
+            });
+
+            document.getElementById('statTotalBrl').innerText = formatCurrency(totalBrl, 'BRL');
+            document.getElementById('statTotalUsd').innerText = `US$ ${totalUsd.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('statPaidBrl').innerText = formatCurrency(paidBrl, 'BRL');
+            document.getElementById('statPaidCount').innerText = `${paidCount} lançamentos pagos`;
+            document.getElementById('statPendingBrl').innerText = formatCurrency(pendingBrl, 'BRL');
+            document.getElementById('statPendingCount').innerText = `${pendingCount} lançamentos pendentes`;
+
+            // Top Platform
+            let topPlatform = 'Nenhuma';
+            let topVal = 0;
+            for (const [p, val] of Object.entries(platformTotals)) {
+                if (val > topVal) {
+                    topVal = val;
+                    topPlatform = p;
+                }
+            }
+            document.getElementById('statTopPlatform').innerText = topPlatform;
+            document.getElementById('statTopPlatformVal').innerText = formatCurrency(topVal, 'BRL');
+
+            // Goal calculation (Using paid or total? Usually total earned or paid towards goal)
+            const goalTarget = appData.goal.target || 1;
+            const goalCurrent = paidBrl; // or totalBrl
+            const percent = Math.min(Math.round((goalCurrent / goalTarget) * 100), 100);
+            const remaining = Math.max(goalTarget - goalCurrent, 0);
+
+            const periodLabels = { diaria: 'Meta Diária', semanal: 'Meta Semanal', mensal: 'Meta Mensal' };
+            document.getElementById('goalPeriodLabel').innerText = periodLabels[appData.goal.period] || 'Meta Mensal';
+            document.getElementById('goalCurrent').innerText = formatCurrency(goalCurrent, 'BRL');
+            document.getElementById('goalTarget').innerText = formatCurrency(goalTarget, 'BRL');
+            document.getElementById('goalPercent').innerText = `${percent}%`;
+            document.getElementById('goalProgressBar').style.width = `${percent}%`;
+            document.getElementById('goalRemaining').innerText = remaining > 0 ? `Falta ${formatCurrency(remaining, 'BRL')} para atingir a meta` : 'Parabéns! Meta atingida com sucesso! 🎉';
+
+            renderPlatformBreakdownList(platformTotals, paidBrl);
+        }
+
+        function renderPlatformBreakdownList(platformTotals, totalPaid) {
+            const container = document.getElementById('platformBreakdownList');
+            let html = '';
+
+            appData.platforms.forEach(p => {
+                const val = platformTotals[p.name] || 0;
+                const percentage = totalPaid > 0 ? Math.round((val / totalPaid) * 100) : 0;
+                html += `
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-3 h-3 rounded-full" style="background-color: ${p.color};"></div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-900 dark:text-white">${p.name}</p>
+                                <p class="text-xs text-slate-400">${p.currency}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-slate-900 dark:text-white tabular-nums">${formatCurrency(val, 'BRL')}</p>
+                            <p class="text-xs text-slate-400">${percentage}%</p>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Charts
+        function renderDashboardCharts() {
+            const ctx = document.getElementById('platformChart').getContext('2d');
+
+            const platformTotals = {};
+            appData.platforms.forEach(p => platformTotals[p.name] = 0);
+            appData.earnings.forEach(e => {
+                const pObj = appData.platforms.find(x => x.name === e.platform);
+                const curr = pObj ? pObj.currency : 'USD';
+                platformTotals[e.platform] = (platformTotals[e.platform] || 0) + convertToBrl(e.value, curr);
+            });
+
+            const labels = appData.platforms.map(p => p.name);
+            const data = labels.map(l => platformTotals[l] || 0);
+            const colors = appData.platforms.map(p => p.color);
+
+            if (platformChartInstance) {
+                platformChartInstance.destroy();
+            }
+
+            platformChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    family: 'Plus Jakarta Sans',
+                                    size: 12
+                                },
+                                color: document.documentElement.classList.contains('dark') ? '#94a3b8' : '#475569'
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // Recent Earnings Table
+        function renderRecentEarnings() {
+            const tbody = document.getElementById('recentEarningsTableBody');
+            const sorted = [...appData.earnings].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+
+            if (sorted.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400">Nenhum lançamento registrado ainda.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            sorted.forEach(e => {
+                const pObj = appData.platforms.find(x => x.name === e.platform);
+                const curr = pObj ? pObj.currency : 'USD';
+                const brlVal = convertToBrl(e.value, curr);
+                const statusBadge = e.status === 'Pago'
+                    ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-circle-check mr-1.5"></i> Pago</span>`
+                    : `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"><i class="fa-solid fa-clock mr-1.5"></i> Pendente</span>`;
+
+                html += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="py-3 px-6 text-slate-500 text-xs tabular-nums">${formatDate(e.date)}</td>
+                        <td class="py-3 px-6 font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${pObj ? pObj.color : '#3b82f6'}"></span>
+                            <span>${e.platform}</span>
+                        </td>
+                        <td class="py-3 px-6 tabular-nums font-medium">${curr === 'USD' ? 'US$ ' : 'R$ '}${e.value.toFixed(2)}</td>
+                        <td class="py-3 px-6 tabular-nums font-bold text-slate-900 dark:text-white">${formatCurrency(brlVal, 'BRL')}</td>
+                        <td class="py-3 px-6">${statusBadge}</td>
+                        <td class="py-3 px-6 text-slate-500 truncate max-w-[180px]">${e.note || '-'}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // Full Earnings Table with Filters
+        function renderEarningsTable() {
+            const tbody = document.getElementById('fullEarningsTableBody');
+            const filterPlatform = document.getElementById('filterPlatform').value;
+            const filterStatus = document.getElementById('filterStatus').value;
+            const filterSearch = document.getElementById('filterSearch').value.toLowerCase();
+
+            let filtered = appData.earnings.filter(e => {
+                if (filterPlatform && e.platform !== filterPlatform) return false;
+                if (filterStatus && e.status !== filterStatus) return false;
+                if (filterSearch && !e.note.toLowerCase().includes(filterSearch) && !e.platform.toLowerCase().includes(filterSearch)) return false;
+                return true;
+            });
+
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">Nenhum lançamento encontrado com os filtros atuais.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(e => {
+                const pObj = appData.platforms.find(x => x.name === e.platform);
+                const curr = pObj ? pObj.currency : 'USD';
+                const brlVal = convertToBrl(e.value, curr);
+                const statusBadge = e.status === 'Pago'
+                    ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-circle-check mr-1.5"></i> Pago</span>`
+                    : `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"><i class="fa-solid fa-clock mr-1.5"></i> Pendente</span>`;
+
+                html += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="py-3 px-6 text-slate-500 text-xs tabular-nums">${formatDate(e.date)}</td>
+                        <td class="py-3 px-6 font-semibold text-slate-900 dark:text-white flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${pObj ? pObj.color : '#3b82f6'}"></span>
+                            <span>${e.platform}</span>
+                        </td>
+                        <td class="py-3 px-6 tabular-nums font-medium">${curr === 'USD' ? 'US$ ' : 'R$ '}${e.value.toFixed(2)}</td>
+                        <td class="py-3 px-6 tabular-nums font-bold text-slate-900 dark:text-white">${formatCurrency(brlVal, 'BRL')}</td>
+                        <td class="py-3 px-6">${statusBadge}</td>
+                        <td class="py-3 px-6 text-slate-500 truncate max-w-[180px]">${e.note || '-'}</td>
+                        <td class="py-3 px-6 text-right space-x-2">
+                            <button onclick="editEarning('${e.id}')" class="text-slate-400 hover:text-blue-500 transition-colors p-1" title="Editar">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deleteEarning('${e.id}')" class="text-slate-400 hover:text-rose-500 transition-colors p-1" title="Excluir">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // Platforms Grid
+        function renderPlatformsGrid() {
+            const grid = document.getElementById('platformsGrid');
+            let html = '';
+
+            appData.platforms.forEach(p => {
+                // Count earnings & total for this platform
+                let count = 0;
+                let totalBrl = 0;
+                appData.earnings.forEach(e => {
+                    if (e.platform === p.name) {
+                        count++;
+                        totalBrl += convertToBrl(e.value, p.currency);
+                    }
+                });
+
+                html += `
+                    <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex flex-col justify-between space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-4 h-4 rounded-full shadow-sm" style="background-color: ${p.color};"></div>
+                                <h3 class="font-bold text-lg text-slate-900 dark:text-white">${p.name}</h3>
+                            </div>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                ${p.currency}
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 py-2 border-y border-slate-100 dark:border-slate-700 text-xs">
+                            <div>
+                                <p class="text-slate-400">Lançamentos</p>
+                                <p class="font-bold text-slate-900 dark:text-white text-sm">${count}</p>
+                            </div>
+                            <div>
+                                <p class="text-slate-400">Total Acumulado</p>
+                                <p class="font-bold text-slate-900 dark:text-white text-sm tabular-nums">${formatCurrency(totalBrl, 'BRL')}</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-2">
+                            <button onclick="editPlatform('${p.name}')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold text-slate-600 dark:text-slate-300 transition-colors">
+                                Editar
+                            </button>
+                            <button onclick="deletePlatform('${p.name}')" class="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 text-xs font-semibold text-rose-600 dark:text-rose-400 transition-colors">
+                                Excluir
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            grid.innerHTML = html;
+        }
+
+        // Modal Controls: Earnings
+        function openEarningModal(id = null) {
+            document.getElementById('earningModal').classList.remove('hidden');
+            if (id) {
+                document.getElementById('earningModalTitle').innerText = 'Editar Lançamento';
+                const item = appData.earnings.find(x => x.id === id);
+                if (item) {
+                    document.getElementById('earningId').value = item.id;
+                    document.getElementById('earningPlatform').value = item.platform;
+                    document.getElementById('earningValue').value = item.value;
+                    document.getElementById('earningStatus').value = item.status;
+                    document.getElementById('earningDate').value = item.date;
+                    document.getElementById('earningNote').value = item.note || '';
+                }
+            } else {
+                document.getElementById('earningModalTitle').innerText = 'Novo Lançamento';
+                document.getElementById('earningId').value = '';
+                document.getElementById('earningValue').value = '';
+                document.getElementById('earningNote').value = '';
+                setupInitialDate();
+            }
+        }
+
+        function closeEarningModal() {
+            document.getElementById('earningModal').classList.add('hidden');
+        }
+
+        function saveEarning(event) {
+            event.preventDefault();
+            const id = document.getElementById('earningId').value;
+            const platform = document.getElementById('earningPlatform').value;
+            const value = parseFloat(document.getElementById('earningValue').value);
+            const status = document.getElementById('earningStatus').value;
+            const date = document.getElementById('earningDate').value;
+            const note = document.getElementById('earningNote').value;
+
+            const pObj = appData.platforms.find(x => x.name === platform);
+            const currency = pObj ? pObj.currency : 'USD';
+
+            if (id) {
+                const item = appData.earnings.find(x => x.id === id);
+                if (item) {
+                    item.platform = platform;
+                    item.value = value;
+                    item.currency = currency;
+                    item.status = status;
+                    item.date = date;
+                    item.note = note;
+                }
+            } else {
+                const newItem = {
+                    id: Date.now().toString(),
+                    platform,
+                    value,
+                    currency,
+                    status,
+                    date,
+                    note
+                };
+                appData.earnings.push(newItem);
+            }
+
+            saveToLocalStorage();
+            closeEarningModal();
+            renderAll();
+        }
+
+        function editEarning(id) {
+            openEarningModal(id);
+        }
+
+        function deleteEarning(id) {
+            if (confirm('Deseja realmente excluir este lançamento?')) {
+                appData.earnings = appData.earnings.filter(x => x.id !== id);
+                saveToLocalStorage();
+                renderAll();
+            }
+        }
+
+        // Modal Controls: Platforms
+        function openPlatformModal(name = null) {
+            document.getElementById('platformModal').classList.remove('hidden');
+            if (name) {
+                document.getElementById('platformModalTitle').innerText = 'Editar Plataforma';
+                const p = appData.platforms.find(x => x.name === name);
+                if (p) {
+                    document.getElementById('platformOldName').value = p.name;
+                    document.getElementById('platformName').value = p.name;
+                    document.getElementById('platformCurrency').value = p.currency;
+                    document.getElementById('platformColor').value = p.color || '#3b82f6';
+                }
+            } else {
+                document.getElementById('platformModalTitle').innerText = 'Nova Plataforma';
+                document.getElementById('platformOldName').value = '';
+                document.getElementById('platformName').value = '';
+                document.getElementById('platformCurrency').value = 'USD';
+                document.getElementById('platformColor').value = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            }
+        }
+
+        function closePlatformModal() {
+            document.getElementById('platformModal').classList.add('hidden');
+        }
+
+        function savePlatform(event) {
+            event.preventDefault();
+            const oldName = document.getElementById('platformOldName').value;
+            const name = document.getElementById('platformName').value.trim();
+            const currency = document.getElementById('platformCurrency').value;
+            const color = document.getElementById('platformColor').value;
+
+            if (oldName) {
+                const p = appData.platforms.find(x => x.name === oldName);
+                if (p) {
+                    p.name = name;
+                    p.currency = currency;
+                    p.color = color;
+                }
+                // Update earnings platform name if changed
+                if (oldName !== name) {
+                    appData.earnings.forEach(e => {
+                        if (e.platform === oldName) e.platform = name;
+                    });
+                }
+            } else {
+                if (appData.platforms.some(x => x.name === name)) {
+                    alert('Já existe uma plataforma com este nome!');
+                    return;
+                }
+                appData.platforms.push({ name, currency, color });
+            }
+
+            saveToLocalStorage();
+            closePlatformModal();
+            renderAll();
+        }
+
+        function editPlatform(name) {
+            openPlatformModal(name);
+        }
+
+        function deletePlatform(name) {
+            if (appData.platforms.length <= 1) {
+                alert('Você precisa manter ao menos uma plataforma cadastrada.');
+                return;
+            }
+            if (confirm(`Deseja excluir a plataforma "${name}"? Os ganhos associados continuarão salvos.`)) {
+                appData.platforms = appData.platforms.filter(x => x.name !== name);
+                saveToLocalStorage();
+                renderAll();
+            }
+        }
+
+        // Settings & Goals actions
+        function saveExchangeRate(event) {
+            event.preventDefault();
+            const rate = parseFloat(document.getElementById('exchangeRateInput').value);
+            if (rate > 0) {
+                appData.exchangeRate = rate;
+                saveToLocalStorage();
+                renderAll();
+                alert('Cotação atualizada com sucesso!');
+            }
+        }
+
+        function saveGoalSettings(event) {
+            event.preventDefault();
+            const period = document.getElementById('goalPeriodSelect').value;
+            const target = parseFloat(document.getElementById('goalTargetInput').value);
+            appData.goal = { period, target };
+            saveToLocalStorage();
+            renderAll();
+            alert('Meta atualizada com sucesso!');
+        }
+
+        // Backup & Reset
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `taskgains_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function triggerImport() {
+            document.getElementById('importFile').click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.platforms && parsed.earnings) {
+                        appData = parsed;
+                        saveToLocalStorage();
+                        renderAll();
+                        alert('Dados importados com sucesso!');
+                    } else {
+                        alert('Arquivo JSON inválido.');
+                    }
+                } catch (err) {
+                    alert('Erro ao processar arquivo JSON.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function resetData() {
+            if (confirm('Atenção: Isso apagará todos os seus lançamentos e configurações, restaurando o estado inicial. Deseja continuar?')) {
+                localStorage.removeItem('taskgains_data');
+                location.reload();
+            }
+        }
+
+        // Formatters
+        function formatCurrency(val, currency = 'BRL') {
+            if (currency === 'BRL') {
+                return `R$ ${val.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            }
+            return `US$ ${val.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateStr;
+        }
+
+        // Run on load
+        window.onload = initApp;
+    </script>
+</body>
+</html>
