@@ -867,9 +867,7 @@
 
         function saveDailyCalendar(event) {
             event.preventDefault();
-            const pObj = appData.platforms.find(p => p.name === currentDailyPlatform);
-            const currency = pObj ? pObj.currency : 'USD';
-            const rate = pObj && pObj.hourlyRate ? pObj.hourlyRate : 0;
+            if (!appData.timeLogs) appData.timeLogs = {};
 
             const [yStr, mStr] = currentDailyMonth.split('-');
             const year = parseInt(yStr);
@@ -879,6 +877,8 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayStr = String(day).padStart(2, '0');
                 const dateStr = `${currentDailyMonth}-${dayStr}`;
+                const logKey = `${dateStr}_${currentDailyPlatform}`;
+
                 const minsInput = document.querySelector(`input[name="mins_${dateStr}"]`);
                 const noteInput = document.querySelector(`input[name="note_${dateStr}"]`);
 
@@ -887,42 +887,16 @@
                 const totalMins = parseInt(minsInput.value) || 0;
                 const note = noteInput ? noteInput.value.trim() : '';
 
-                let existingIndex = appData.earnings.findIndex(e => e.platform === currentDailyPlatform && e.date === dateStr);
-
                 if (totalMins > 0) {
-                    const hours = Math.floor(totalMins / 60);
-                    const minutes = totalMins % 60;
-                    const value = rate > 0 ? (totalMins / 60) * rate : (existingIndex !== -1 ? appData.earnings[existingIndex].value : 0);
-
-                    if (existingIndex !== -1) {
-                        appData.earnings[existingIndex].hours = hours;
-                        appData.earnings[existingIndex].minutes = minutes;
-                        appData.earnings[existingIndex].value = value;
-                        appData.earnings[existingIndex].currency = currency;
-                        appData.earnings[existingIndex].note = note;
-                    } else {
-                        appData.earnings.push({
-                            id: Date.now().toString() + '_' + day,
-                            platform: currentDailyPlatform,
-                            date: dateStr,
-                            value: value,
-                            currency: currency,
-                            status: 'Pendente',
-                            hours: hours,
-                            minutes: minutes,
-                            note: note
-                        });
-                    }
+                    appData.timeLogs[logKey] = { minutes: totalMins, note: note };
                 } else {
-                    if (existingIndex !== -1) {
-                        appData.earnings.splice(existingIndex, 1);
-                    }
+                    delete appData.timeLogs[logKey];
                 }
             }
 
             saveToLocalStorage();
             renderAll();
-            alert('Calendário diário salvo com sucesso! Os minutos e ganhos foram contabilizados no dashboard e ciclos.');
+            alert('Controle diário salvo com sucesso! O tempo foi registrado independentemente dos lançamentos financeiros.');
         }
 
         // Hours by Day View
@@ -931,21 +905,27 @@
             if (!container) return;
             const dateMap = {};
 
-            appData.earnings.forEach(e => {
-                const date = e.date || new Date().toISOString().split('T')[0];
-                if (!dateMap[date]) {
-                    dateMap[date] = { totalMins: 0, totalBrl: 0, earnings: [] };
-                }
-                const h = parseInt(e.hours) || 0;
-                const m = parseInt(e.minutes) || 0;
-                const mins = h * 60 + m;
-                dateMap[date].totalMins += mins;
+            if (appData.timeLogs) {
+                Object.entries(appData.timeLogs).forEach(([key, log]) => {
+                    const parts = key.split('_');
+                    const date = parts[0];
+                    const platform = parts.slice(1).join('_');
 
-                const pObj = appData.platforms.find(x => x.name === e.platform);
-                const curr = pObj ? pObj.currency : 'USD';
-                dateMap[date].totalBrl += convertToBrl(e.value, curr);
-                dateMap[date].earnings.push(e);
-            });
+                    if (!dateMap[date]) {
+                        dateMap[date] = { totalMins: 0, totalBrl: 0, logs: [] };
+                    }
+                    const mins = log.minutes || 0;
+                    dateMap[date].totalMins += mins;
+
+                    const pObj = appData.platforms.find(x => x.name === platform);
+                    const rate = pObj && pObj.hourlyRate ? pObj.hourlyRate : 0;
+                    const estVal = (mins / 60) * rate;
+                    const brlVal = convertToBrl(estVal, pObj ? pObj.currency : 'USD');
+
+                    dateMap[date].totalBrl += brlVal;
+                    dateMap[date].logs.push({ platform, ...log });
+                });
+            }
 
             const dates = Object.keys(dateMap).sort((a, b) => b.localeCompare(a));
             const totalDays = dates.length;
@@ -968,12 +948,8 @@
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h2 class="text-2xl font-bold text-slate-900 dark:text-white">⏱ Horas Realizadas por Dia</h2>
-                            <p class="text-xs text-slate-500 mt-1">Acompanhamento detalhado do tempo dedicado e ganhos por dia de trabalho em cada plataforma.</p>
+                            <p class="text-xs text-slate-500 mt-1">Acompanhamento consolidado do tempo dedicado registrado no controle diário.</p>
                         </div>
-                        <button onclick="openEarningModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-sm flex items-center justify-center space-x-2 transition-all">
-                            <i class="fa-solid fa-plus text-xs"></i>
-                            <span>Registrar Horas / Lançamento</span>
-                        </button>
                     </div>
 
                     <!-- Stats Cards -->
@@ -1003,7 +979,7 @@
                     <!-- Daily Table -->
                     <div class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden">
                         <div class="p-6 border-b border-slate-200 dark:border-slate-700">
-                            <h3 class="font-bold text-lg text-slate-900 dark:text-white">Detalhamento Diário</h3>
+                            <h3 class="font-bold text-lg text-slate-900 dark:text-white">Detalhamento Diário Consolidado</h3>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse">
@@ -1011,7 +987,7 @@
                                     <tr class="border-b border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-400 uppercase bg-slate-50/50 dark:bg-slate-700/20">
                                         <th class="py-3 px-6">Data</th>
                                         <th class="py-3 px-6">Tempo Total</th>
-                                        <th class="py-3 px-6">Ganho (BRL)</th>
+                                        <th class="py-3 px-6">Valor Estimado (BRL)</th>
                                         <th class="py-3 px-6">Plataformas / Notas</th>
                                     </tr>
                                 </thead>
@@ -1019,19 +995,19 @@
             `;
 
             if (dates.length === 0) {
-                html += `<tr><td colspan="4" class="py-8 text-center text-slate-400">Nenhum registro de horas encontrado.</td></tr>`;
+                html += `<tr><td colspan="4" class="py-8 text-center text-slate-400">Nenhum registro de horas encontrado no controle diário.</td></tr>`;
             } else {
                 dates.forEach(d => {
                     const item = dateMap[d];
                     const timeStr = formatTime(item.totalMins);
-                    const platNames = [...new Set(item.earnings.map(e => e.platform))];
+                    const platNames = [...new Set(item.logs.map(l => l.platform))];
                     const platBadges = platNames.map(pn => {
                         const pObj = appData.platforms.find(x => x.name === pn);
                         const color = pObj ? pObj.color : '#3b82f6';
                         return `<span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-xs bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 mr-2"><span class="w-2 h-2 rounded-full" style="background:${color}"></span><span>${pn}</span></span>`;
                     }).join('');
 
-                    const notes = item.earnings.map(e => e.note).filter(Boolean).join(' | ');
+                    const notes = item.logs.map(l => l.note).filter(Boolean).join(' | ');
 
                     html += `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
@@ -1066,12 +1042,12 @@
                 <div class="space-y-6">
                     <div>
                         <h2 class="text-2xl font-bold text-slate-900 dark:text-white">📅 Ciclos de Fechamento e Pagamentos</h2>
-                        <p class="text-xs text-slate-500 mt-1">Acompanhamento dos períodos de faturamento (Ex: Perle: 01 ao 16 com pgto no dia 20, e 17 ao 31 com pgto no dia 10) e datas previstas de recebimento.</p>
+                        <p class="text-xs text-slate-500 mt-1">Acompanhamento dos períodos de faturamento de cada plataforma (Ex: Perle: 01-16 pago dia 20, 17-31 pago dia 10) calculados a partir do controle diário.</p>
                     </div>
             `;
 
             if (appData.platforms.length === 0) {
-                html += `<div class="bg-white dark:bg-slate-800 p-8 rounded-3xl text-center text-slate-400">Nenhuma plataforma cadastrada.</div></div>`;
+                html += `<div class="bg-white dark:bg-slate-800 p-8 rounded-3xl text-center text-slate-400">Cadastre plataformas primeiro.</div></div>`;
                 container.innerHTML = html;
                 return;
             }
@@ -1081,11 +1057,12 @@
             const now = new Date();
             monthsSet.add(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
 
-            appData.earnings.forEach(e => {
-                if (e.date) {
-                    monthsSet.add(e.date.substring(0, 7));
-                }
-            });
+            if (appData.timeLogs) {
+                Object.keys(appData.timeLogs).forEach(key => {
+                    const date = key.split('_')[0];
+                    monthsSet.add(date.substring(0, 7));
+                });
+            }
 
             const sortedMonths = [...monthsSet].sort((a, b) => b.localeCompare(a));
 
@@ -1097,6 +1074,117 @@
 
                 appData.platforms.forEach(p => {
                     const cycleType = p.cycleType || 'perle';
+                    const rate = p.hourlyRate || 0;
+
+                    if (cycleType === 'perle') {
+                        let p1Mins = 0;
+                        for (let d = 1; d <= 16; d++) {
+                            const ds = `${ym}-${String(d).padStart(2, '0')}`;
+                            const l = appData.timeLogs ? appData.timeLogs[`${ds}_${p.name}`] : null;
+                            if (l) p1Mins += l.minutes;
+                        }
+
+                        let p2Mins = 0;
+                        for (let d = 17; d <= lastDay; d++) {
+                            const ds = `${ym}-${String(d).padStart(2, '0')}`;
+                            const l = appData.timeLogs ? appData.timeLogs[`${ds}_${p.name}`] : null;
+                            if (l) p2Mins += l.minutes;
+                        }
+
+                        const payDate1 = `${year}-${String(month).padStart(2, '0')}-20`;
+                        cyclesList.push({
+                            platform: p,
+                            title: `${p.name} — 1ª Quinzena (${month}/${year})`,
+                            period: `01/${String(month).padStart(2, '0')}/${year} a 16/${String(month).padStart(2, '0')}/${year}`,
+                            payDate: payDate1,
+                            totalMins: p1Mins,
+                            estValue: (p1Mins / 60) * rate
+                        });
+
+                        let nextY = year, nextM = month + 1;
+                        if (nextM > 12) { nextM = 1; nextY++; }
+                        const payDate2 = `${nextY}-${String(nextM).padStart(2, '0')}-10`;
+                        cyclesList.push({
+                            platform: p,
+                            title: `${p.name} — 2ª Quinzena (${month}/${year})`,
+                            period: `17/${String(month).padStart(2, '0')}/${year} a ${lastDay}/${String(month).padStart(2, '0')}/${year}`,
+                            payDate: payDate2,
+                            totalMins: p2Mins,
+                            estValue: (p2Mins / 60) * rate
+                        });
+                    } else {
+                        let mMins = 0;
+                        for (let d = 1; d <= lastDay; d++) {
+                            const ds = `${ym}-${String(d).padStart(2, '0')}`;
+                            const l = appData.timeLogs ? appData.timeLogs[`${ds}_${p.name}`] : null;
+                            if (l) mMins += l.minutes;
+                        }
+
+                        let nextY = year, nextM = month + 1;
+                        if (nextM > 12) { nextM = 1; nextY++; }
+                        const payDate = `${nextY}-${String(nextM).padStart(2, '0')}-10`;
+
+                        cyclesList.push({
+                            platform: p,
+                            title: `${p.name} — Fechamento Mensal (${month}/${year})`,
+                            period: `01/${String(month).padStart(2, '0')}/${year} a ${lastDay}/${String(month).padStart(2, '0')}/${year}`,
+                            payDate: payDate,
+                            totalMins: mMins,
+                            estValue: (mMins / 60) * rate
+                        });
+                    }
+                });
+            });
+
+            const activeCycles = cyclesList.filter(c => c.totalMins > 0 || c.payDate >= now.toISOString().split('T')[0]);
+            if (activeCycles.length === 0) {
+                cyclesList.slice(0, 4).forEach(c => activeCycles.push(c));
+            }
+
+            html += `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">`;
+
+            activeCycles.forEach(c => {
+                const totalBrl = convertToBrl(c.estValue, c.platform.currency);
+                const totalMins = c.totalMins;
+
+                function formatTime(mins) {
+                    const h = Math.floor(mins / 60);
+                    const m = mins % 60;
+                    return h === 0 ? `${m}min` : (m === 0 ? `${h}h` : `${h}h ${m}min`);
+                }
+
+                html += `
+                    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-700 shadow-sm flex flex-col justify-between space-y-4" style="border-left: 4px solid ${c.platform.color}">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-900 dark:text-white">${escapeHtml(c.title)}</h3>
+                                <p class="text-xs text-slate-400 mt-0.5">Período: ${c.period}</p>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">Ciclo Ativo</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-700/50 text-xs">
+                            <div>
+                                <span class="text-slate-400 block">Total Estimado</span>
+                                <strong class="text-emerald-600 dark:text-emerald-400 text-base tabular-nums">${formatCurrency(totalBrl, 'BRL')}</strong>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block">Horas no Ciclo</span>
+                                <strong class="text-blue-600 dark:text-blue-400 text-base tabular-nums">${formatTime(totalMins)}</strong>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs">
+                            <span class="text-slate-500">💳 Previsão de Pagamento:</span>
+                            <strong class="text-slate-900 dark:text-white">${formatDate(c.payDate)}</strong>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
 
                     if (cycleType === 'perle') {
                         const p1 = appData.earnings.filter(e => {
