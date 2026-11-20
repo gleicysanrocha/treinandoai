@@ -796,15 +796,14 @@
                 const dateObj = new Date(year, month - 1, day);
                 const weekDayName = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' });
 
-                const existing = appData.earnings.find(e => e.platform === currentDailyPlatform && e.date === dateStr);
-                const mins = existing ? (parseInt(existing.hours || 0) * 60 + parseInt(existing.minutes || 0)) : '';
-                const note = existing ? (existing.note || '') : '';
+                const logKey = `${dateStr}_${currentDailyPlatform}`;
+                const logItem = appData.timeLogs && appData.timeLogs[logKey] ? appData.timeLogs[logKey] : null;
+                const mins = logItem ? logItem.minutes : '';
+                const note = logItem ? (logItem.note || '') : '';
 
                 let estVal = 0;
                 if (mins && pObj.hourlyRate) {
                     estVal = (mins / 60) * pObj.hourlyRate;
-                } else if (existing) {
-                    estVal = existing.value;
                 }
 
                 html += `
