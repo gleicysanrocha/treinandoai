@@ -629,8 +629,10 @@
         }
 
         function setupInitialDate() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('earningDate').value = today;
+            const dateEl = document.getElementById('earningDate');
+            if (dateEl) {
+                dateEl.value = new Date().toISOString().split('T')[0];
+            }
         }
 
         // Theme Handling
@@ -686,22 +688,27 @@
 
         // Render All
         function renderAll() {
-            document.getElementById('headerExchangeRate').innerText = appData.exchangeRate.toFixed(2);
-            document.getElementById('exchangeRateInput').value = appData.exchangeRate;
+            const hRate = document.getElementById('headerExchangeRate');
+            if (hRate) hRate.innerText = appData.exchangeRate.toFixed(2);
 
-            // Goals settings form
-            document.getElementById('goalPeriodSelect').value = appData.goal.period;
-            document.getElementById('goalTargetInput').value = appData.goal.target;
+            const exInput = document.getElementById('exchangeRateInput');
+            if (exInput) exInput.value = appData.exchangeRate;
 
-            renderPlatformDropdowns();
-            renderStatsAndGoal();
-            renderRecentEarnings();
-            renderEarningsTable();
-            renderPlatformsGrid();
-            renderDashboardCharts();
-            renderDailyCalendar();
-            renderHoursByDay();
-            renderCycles();
+            const goalSel = document.getElementById('goalPeriodSelect');
+            if (goalSel && appData.goal) goalSel.value = appData.goal.period;
+
+            const goalTarget = document.getElementById('goalTargetInput');
+            if (goalTarget && appData.goal) goalTarget.value = appData.goal.target;
+
+            try { renderPlatformDropdowns(); } catch(e) { console.error(e); }
+            try { renderStatsAndGoal(); } catch(e) { console.error(e); }
+            try { renderRecentEarnings(); } catch(e) { console.error(e); }
+            try { renderEarningsTable(); } catch(e) { console.error(e); }
+            try { renderPlatformsGrid(); } catch(e) { console.error(e); }
+            try { renderDashboardCharts(); } catch(e) { console.error(e); }
+            try { renderDailyCalendar(); } catch(e) { console.error(e); }
+            try { renderHoursByDay(); } catch(e) { console.error(e); }
+            try { renderCycles(); } catch(e) { console.error(e); }
         }
 
         // Daily Calendar per Platform View
