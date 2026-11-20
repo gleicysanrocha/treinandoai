@@ -571,7 +571,6 @@
                     </button>
                 </div>
             </form>
-            </form>
         </div>
     </div>
 
@@ -611,7 +610,14 @@
             const saved = localStorage.getItem('taskgains_data');
             if (saved) {
                 try {
-                    appData = JSON.parse(saved);
+                    const parsed = JSON.parse(saved);
+                    appData = {
+                        exchangeRate: parsed.exchangeRate || appData.exchangeRate,
+                        platforms: parsed.platforms && parsed.platforms.length > 0 ? parsed.platforms : appData.platforms,
+                        earnings: parsed.earnings || appData.earnings,
+                        timeLogs: parsed.timeLogs || {},
+                        goal: parsed.goal || appData.goal
+                    };
                 } catch (e) {
                     console.error('Error loading saved data', e);
                 }
