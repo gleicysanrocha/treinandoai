@@ -688,25 +688,36 @@
             try { renderDailyCalendar(); } catch(e) { console.error(e); }
         }
 
-        // Daily Calendar per Platform View with Dashboard & Manual Filtering
+        // Daily Calendar per Platform View with a flexible date-range report
         let currentDailyPlatform = '';
         let currentDailyMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
-        let dailyFilterType = 'all'; // 'all' | 'worked'
-        let dailySearchQuery = '';
+        let dailyReportStart = '';
+        let dailyReportEnd = '';
 
-        function setDailyFilter(type) {
-            dailyFilterType = type;
+        function useFullDailyMonth() {
+            const [year, month] = currentDailyMonth.split('-').map(Number);
+            dailyReportStart = `${currentDailyMonth}-01`;
+            dailyReportEnd = `${currentDailyMonth}-${String(new Date(year, month, 0).getDate()).padStart(2, '0')}`;
             renderDailyCalendar();
         }
 
-        function setDailySearch(val) {
-            dailySearchQuery = val;
-            renderDailyCalendar();
-            const searchInput = document.getElementById('dailySearchInput');
-            if (searchInput) {
-                searchInput.focus();
-                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+        function generateDailyReport(event) {
+            event.preventDefault();
+            const start = document.getElementById('dailyReportStart').value;
+            const end = document.getElementById('dailyReportEnd').value;
+
+            if (!start || !end) {
+                alert('Informe a data inicial e a data final do relatório.');
+                return;
             }
+            if (start > end) {
+                alert('A data inicial não pode ser maior que a data final.');
+                return;
+            }
+
+            dailyReportStart = start;
+            dailyReportEnd = end;
+            renderDailyCalendar();
         }
 
         function renderDailyCalendar() {
@@ -744,11 +755,18 @@
             const daysInMonth = new Date(year, month, 0).getDate();
             const rate = pObj.hourlyRate || 0;
 
+            if (!dailyReportStart || !dailyReportEnd) {
+                dailyReportStart = `${currentDailyMonth}-01`;
+                dailyReportEnd = `${currentDailyMonth}-${String(daysInMonth).padStart(2, '0')}`;
+            }
+
+            const reportStartDate = new Date(`${dailyReportStart}T00:00:00`);
+            const reportEndDate = new Date(`${dailyReportEnd}T00:00:00`);
             let totalMonthMins = 0;
             let daysWorkedCount = 0;
 
-            for (let d = 1; d <= daysInMonth; d++) {
-                const ds = `${currentDailyMonth}-${String(d).padStart(2, '0')}`;
+            for (let date = new Date(reportStartDate); date <= reportEndDate; date.setDate(date.getDate() + 1)) {
+                const ds = date.toISOString().substring(0, 10);
                 const l = appData.timeLogs ? appData.timeLogs[`${ds}_${pObj.name}`] : null;
                 if (l && l.minutes > 0) {
                     totalMonthMins += l.minutes;
@@ -803,6 +821,28 @@
                         </div>
                     </div>
 
+                    <!-- Manual Date Range Report -->
+                    <form onsubmit="generateDailyReport(event)" class="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm">
+                        <div class="flex flex-col lg:flex-row lg:items-end gap-4">
+                            <div class="flex-1">
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Data inicial</label>
+                                <input type="date" id="dailyReportStart" value="${dailyReportStart}" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">Data final</label>
+                                <input type="date" id="dailyReportEnd" value="${dailyReportEnd}" required class="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-sm flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-filter"></i>
+                                <span>Gerar Relatório</span>
+                            </button>
+                            <button type="button" onclick="useFullDailyMonth()" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-5 py-2.5 rounded-xl font-semibold text-sm">
+                                Mês completo
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-3">Escolha qualquer intervalo, inclusive entre meses diferentes. O relatório considera somente os dias dentro do período informado.</p>
+                    </form>
+
                     <!-- Dashboard Stats Grid -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex items-center justify-between">
@@ -854,40 +894,13 @@
                     <form onsubmit="saveDailyCalendar(event)" class="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700 shadow-sm overflow-hidden">
                         <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div>
-                                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Calendário Diário de Minutos — ${month}/${year} (${escapeHtml(currentDailyPlatform)})</h3>
-                                <p class="text-xs text-slate-500 mt-0.5">Use os filtros e a busca para localizar dias específicos rapidamente.</p>
+                                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Relatório Diário de Minutos — ${formatDate(dailyReportStart)} a ${formatDate(dailyReportEnd)}</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">${escapeHtml(currentDailyPlatform)} — edite os lançamentos diretamente na tabela e salve as alterações.</p>
                             </div>
                             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-sm transition-all flex items-center space-x-2">
                                 <i class="fa-solid fa-floppy-disk"></i>
                                 <span>Salvar Alterações do Mês</span>
                             </button>
-                        </div>
-
-                        <!-- Manual Filter & Search Bar -->
-                        <div class="p-4 bg-slate-50 dark:bg-slate-700/30 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                                <button type="button" id="btnFilter_all" onclick="setDailyFilter('all')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${dailyFilterType === 'all' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}">
-                                    Todos (${daysInMonth})
-                                </button>
-                                <button type="button" id="btnFilter_worked" onclick="setDailyFilter('worked')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${dailyFilterType === 'worked' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}">
-                                    Com Horas
-                                </button>
-                                <button type="button" id="btnFilter_empty" onclick="setDailyFilter('empty')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${dailyFilterType === 'empty' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}">
-                                    Vazios
-                                </button>
-                                <button type="button" id="btnFilter_q1" onclick="setDailyFilter('q1')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${dailyFilterType === 'q1' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}">
-                                    1ª Quinzena (1-16)
-                                </button>
-                                <button type="button" id="btnFilter_q2" onclick="setDailyFilter('q2')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${dailyFilterType === 'q2' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}">
-                                    2ª Quinzena (17-31)
-                                </button>
-                            </div>
-                            <div class="w-full sm:w-72">
-                                <div class="relative">
-                                    <span class="absolute left-3 top-2.5 text-slate-400 text-xs"><i class="fa-solid fa-magnifying-glass"></i></span>
-                                    <input type="text" id="dailySearchInput" value="${escapeHtml(dailySearchQuery)}" oninput="setDailySearch(this.value)" placeholder="Buscar dia (ex: 15) ou nota..." class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white">
-                                </div>
-                            </div>
                         </div>
 
                         <div class="overflow-x-auto">
@@ -904,27 +917,15 @@
                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700 text-sm" id="dailyTableBody">
             `;
 
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayStr = String(day).padStart(2, '0');
-                const dateStr = `${currentDailyMonth}-${dayStr}`;
-                const dateObj = new Date(year, month - 1, day);
-                const weekDayName = dateObj.toLocaleDateString('pt-BR', { weekday: 'short' });
+            for (let date = new Date(reportStartDate); date <= reportEndDate; date.setDate(date.getDate() + 1)) {
+                const dateStr = date.toISOString().substring(0, 10);
+                const day = date.getDate();
+                const weekDayName = date.toLocaleDateString('pt-BR', { weekday: 'short' });
 
                 const logKey = `${dateStr}_${currentDailyPlatform}`;
                 const logItem = appData.timeLogs && appData.timeLogs[logKey] ? appData.timeLogs[logKey] : null;
                 const mins = logItem ? logItem.minutes : '';
                 const note = logItem ? (logItem.note || '') : '';
-
-                const hasMins = mins !== '' && mins > 0;
-                if (dailyFilterType === 'worked' && !hasMins) continue;
-
-                if (dailySearchQuery) {
-                    const q = dailySearchQuery.toLowerCase();
-                    const dayMatch = String(day).includes(q) || `dia ${day}`.includes(q);
-                    const dateMatch = dateStr.includes(q) || dateStr.split('-').reverse().join('/').includes(q);
-                    const noteMatch = note.toLowerCase().includes(q);
-                    if (!dayMatch && !dateMatch && !noteMatch) continue;
-                }
 
                 let estVal = 0;
                 if (mins && pObj.hourlyRate) {
