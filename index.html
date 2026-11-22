@@ -863,20 +863,29 @@
                             </button>
                         </div>
 
-                        <!-- Filter & Search Bar -->
+                        <!-- Manual Filter & Search Bar -->
                         <div class="p-4 bg-slate-50 dark:bg-slate-700/30 border-b border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div class="flex items-center space-x-2 w-full sm:w-auto">
-                                <button type="button" onclick="setDailyFilter('all')" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all ${dailyFilterType === 'all' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}">
-                                    Todos os Dias (${daysInMonth})
+                            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                                <button type="button" id="btnFilter_all" onclick="setDailyFilter('all')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${dailyFilterType === 'all' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}">
+                                    Todos (${daysInMonth})
                                 </button>
-                                <button type="button" onclick="setDailyFilter('worked')" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all ${dailyFilterType === 'worked' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}">
-                                    Apenas com Horas Trabalhadas
+                                <button type="button" id="btnFilter_worked" onclick="setDailyFilter('worked')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${dailyFilterType === 'worked' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}">
+                                    Com Horas
+                                </button>
+                                <button type="button" id="btnFilter_empty" onclick="setDailyFilter('empty')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${dailyFilterType === 'empty' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}">
+                                    Vazios
+                                </button>
+                                <button type="button" id="btnFilter_q1" onclick="setDailyFilter('q1')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${dailyFilterType === 'q1' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}">
+                                    1ª Quinzena (1-16)
+                                </button>
+                                <button type="button" id="btnFilter_q2" onclick="setDailyFilter('q2')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${dailyFilterType === 'q2' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'}">
+                                    2ª Quinzena (17-31)
                                 </button>
                             </div>
-                            <div class="w-full sm:w-80">
+                            <div class="w-full sm:w-72">
                                 <div class="relative">
                                     <span class="absolute left-3 top-2.5 text-slate-400 text-xs"><i class="fa-solid fa-magnifying-glass"></i></span>
-                                    <input type="text" id="dailySearchInput" value="${escapeHtml(dailySearchQuery)}" oninput="setDailySearch(this.value)" placeholder="Buscar por dia (ex: 15) ou observação..." class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white">
+                                    <input type="text" id="dailySearchInput" value="${escapeHtml(dailySearchQuery)}" oninput="setDailySearch(this.value)" placeholder="Buscar dia (ex: 15) ou nota..." class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white">
                                 </div>
                             </div>
                         </div>
