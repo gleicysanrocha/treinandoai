@@ -688,25 +688,67 @@
             try { renderDailyCalendar(); } catch(e) { console.error(e); }
         }
 
-        // Daily Calendar per Platform View with Dashboard & Manual Filtering
+        // Daily Calendar per Platform View with Dashboard & DOM Filtering
         let currentDailyPlatform = '';
         let currentDailyMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
         let dailyFilterType = 'all'; // 'all' | 'worked'
-        let dailySearchQuery = '';
 
         function setDailyFilter(type) {
             dailyFilterType = type;
-            renderDailyCalendar();
+            const btnAll = document.getElementById('btnFilterAll');
+            const btnWorked = document.getElementById('btnFilterWorked');
+            if (btnAll && btnWorked) {
+                if (type === 'all') {
+                    btnAll.className = "px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-blue-600 text-white shadow-sm";
+                    btnWorked.className = "px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600";
+                } else {
+                    btnWorked.className = "px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-blue-600 text-white shadow-sm";
+                    btnAll.className = "px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600";
+                }
+            }
+            applyDailyFilters();
         }
 
-        function setDailySearch(val) {
-            dailySearchQuery = val;
-            renderDailyCalendar();
+        function applyDailyFilters() {
             const searchInput = document.getElementById('dailySearchInput');
-            if (searchInput) {
-                searchInput.focus();
-                searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+            const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const rows = document.querySelectorAll('.daily-row');
+
+            rows.forEach(row => {
+                const dayNum = row.dataset.day;
+                const dateStr = row.dataset.date;
+                const note = row.dataset.note.toLowerCase();
+                const minsInput = row.querySelector('.daily-mins-input');
+                const mins = minsInput ? parseInt(minsInput.value) || 0 : 0;
+                const hasMins = mins > 0;
+
+                let matchesFilter = (dailyFilterType === 'all') || (dailyFilterType === 'worked' && hasMins);
+                let matchesSearch = !query || dayNum.includes(query) || `dia ${dayNum}`.includes(query) || dateStr.includes(query) || dateStr.split('-').reverse().join('/').includes(query) || note.includes(query);
+
+                if (matchesFilter && matchesSearch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function updateDailyRowEst(input) {
+            const dt = input.dataset.date;
+            const rate = parseFloat(input.dataset.rate) || 0;
+            const m = parseFloat(input.value) || 0;
+            const val = (m / 60) * rate;
+            const span = document.getElementById(`est_${dt}`);
+            if (span) span.innerText = val.toFixed(2);
+            applyDailyFilters();
+        }
+
+        function updateDailyRowNote(input) {
+            const row = input.closest('tr');
+            if (row) {
+                row.dataset.note = input.value;
             }
+            applyDailyFilters();
         }
 
         function renderDailyCalendar() {
